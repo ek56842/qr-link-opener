@@ -1,0 +1,11 @@
+build-venv/
+.venv/
+.qr-link-opener-data/
+build/
+build-*/
+dist/
+installer-output/
+__pycache__/
+*.spec
+.pytest_cache/
+.coverage
