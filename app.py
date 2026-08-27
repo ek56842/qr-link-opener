@@ -28,7 +28,7 @@ from qr_utils import decode_qr_png, is_openable_url
 
 
 APP_NAME = "QR 連結快速開啟"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 RUN_VALUE = "QRLinkOpener"
 HOTKEY_ID = 1
@@ -139,6 +139,9 @@ class CaptureOverlay(QWidget):
         self.end: QPoint | None = None
         self.setGeometry(geometry)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        # Let Windows show the real desktop through the overlay; only the
+        # painted layer is dimmed, like the Windows snipping interface.
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setCursor(Qt.CursorShape.CrossCursor)
 
     def selection(self) -> QRect:
@@ -148,10 +151,14 @@ class CaptureOverlay(QWidget):
 
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 105))
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 82))
         selected = self.selection()
         if not selected.isNull():
-            painter.drawPixmap(selected, self.screenshot, selected)
+            # Clear only the selection to reveal the unmodified desktop.
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+            painter.fillRect(selected, Qt.GlobalColor.transparent)
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+            painter.fillRect(selected, QColor(255, 255, 255, 24))
             painter.setPen(QPen(QColor("#4fc3f7"), 2))
             painter.drawRect(selected)
         painter.setPen(QColor("white"))
@@ -288,7 +295,7 @@ class QRLinkOpener:
             return
         screenshot, geometry = capture_virtual_desktop()
         self.overlay = CaptureOverlay(screenshot, geometry, self.decode_selection)
-        self.overlay.showFullScreen()
+        self.overlay.show()
         self.overlay.activateWindow()
         self.overlay.setFocus()
 
