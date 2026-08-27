@@ -34,6 +34,14 @@ class QrDecodeTests(unittest.TestCase):
         from qr_utils import decode_qr_png
         self.assertEqual(decode_qr_png(encoded.tobytes()), ["https://line.me/ti/p/example"])
 
+    def test_decodes_a_tightly_cropped_small_qr_image(self):
+        encoder = cv2.QRCodeEncoder_create(cv2.QRCodeEncoder_Params())
+        image = encoder.encode("https://example.com/tight-crop")
+        ok, encoded = cv2.imencode(".png", image)
+        self.assertTrue(ok)
+        from qr_utils import decode_qr_png
+        self.assertEqual(decode_qr_png(encoded.tobytes()), ["https://example.com/tight-crop"])
+
 
 if __name__ == "__main__":
     unittest.main()
